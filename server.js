@@ -6,15 +6,26 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 
+
 const URI = process.env.MONGO_URI;
 const DB = 'manpower';
 let db;
 
-MongoClient.connect(URI).then(client => {
-  db = client.db(DB);
-  console.log('MongoDB connected');
-}).catch(err => console.error('MongoDB connection error:', err));
+if (!URI) {
+  console.error('MONGO_URI environment variable is not set!');
+  process.exit(1);
+}
 
+MongoClient.connect(URI, {
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000
+}).then(client => {
+  db = client.db(DB);
+  console.log('MongoDB connected successfully');
+}).catch(err => {
+  console.error('MongoDB connection error:', err.message);
+  process.exit(1);
+});
 // POST — save records
 app.post('/api/:collection', async (req, res) => {
   try {
